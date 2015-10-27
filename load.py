@@ -802,8 +802,10 @@ class Product:
         return result
     
     def getSellStatus(self):
-        if self['sell_status'] == 'Normal':
+        if self['sell_status'] == 'NORMAL':
             return 1
+        elif self['sell_status'] == "SOLD OUT":
+            return 21
     
     def getSellStartDate(self):
         return None
