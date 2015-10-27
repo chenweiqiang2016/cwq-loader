@@ -487,8 +487,9 @@ totally loaded: %d
               price: %d
             img_url: %d
      category_index: %d
+     sellstart_date: %d
         """
-        print output %(count, insert,  keep, error, update, reviews_update, price_update, imgUrl_update, categoryIndex_update)
+        print output %(count, insert,  keep, error, update, reviews_update, price_update, imgUrl_update, categoryIndex_update, sellStartDate_update)
     
     def insert_product(self, product):
         #23个字段
@@ -710,7 +711,7 @@ class ProductCache:
             details = []
             cached_values = self.find(product[self.cacheType])
             product['id'] = cached_values['aimsId'] #不知道结果能不能返回 能！
-            if product.getReviews() > cached_values['reviews']:
+            if product.getReviews() > int(cached_values['reviews']): #后加入的reviews为字符串
                 details.append('reviews')
             if product['price'] and product['price'] != cached_values['price']:
                 details.append("price")
@@ -718,6 +719,8 @@ class ProductCache:
                 details.append("img_url")
             if product.getCategoryIndex() > 0 and product.getCategoryIndex() != cached_values['category_index']:
                 details.append('category_index')
+            if product.getSellStartDate() and product.getSellStartDate() != cached_values['sellstart_date']:
+                details.append('sellstart_date')
             #产品的三种情形
             if not details:
                 return "keep", []
@@ -804,17 +807,31 @@ class Product:
     def getSellStatus(self):
         if self['sell_status'] == 'NORMAL':
             return 1
-        elif self['sell_status'] == "SOLD OUT":
+        elif self['sell_status'] == 'CLEARANCE':
+            return 11
+        elif self['sell_status'] == 'SPECIAL':
+            return 12
+        elif self['sell_status'] == 'SOLD OUT':
             return 21
-    
+        elif self['sell_status'] == "OUT OF STOCK":
+            return 22
+        else:
+            print self['sell_status'], self.sku_id, "other sell status"
+            return 0
+
     def getSellStartDate(self):
-        return None
+        if self['add_date']: #2015/2/2
+            fields = self['add_date'].split("/")
+            if len(fields) == 2:
+                return datetime.date(int(fields[0]), int(fields[1]), 1)
+            elif len(fields) == 3:
+                return datetime.date(int(fields[0]), int(fields[1]), int(fields[2]))      
     
     def getReviews(self):
         return int(self['reviews'])
     
     def getCategoryIndex(self):
-        # 60是手动数据
+        # 60是手动数据  第二行怀疑存在隐蔽的bug
         if self["category_index"] or self["cate_idx"]:
             return int(self["category_index"]) if self["category_index"] else int(self["cate_idx"])
         if self['page_idx'] and self['num_idx']:
