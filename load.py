@@ -2,6 +2,8 @@
 
 
 """
+10/28/2015 Chen Weiqiang 全部商品更新cm_picked为1
+
 10/26/2015 Chen Weiqiang 基本完成  部分字段需要完善
 
 10/23/2015 Chen Weiqiang 测试初步通过的版本
@@ -469,6 +471,8 @@ class CaptureLoader():
                 #三种情形都要执行 可能造成数据不吻合 error增多
                 self.insert_product_ranks(product)
                 self.updateLatestCaptureDate(product)
+                #配合最近推行的直接抓取部分商品 全部推送
+                self.setCmPicked(product)
             except Exception, e:
                 print e
                 error += 1
@@ -603,6 +607,13 @@ totally loaded: %d
         sql = """update products set latest_capture_date = %s where id = %s 
               """
         self.db.cursor.execute(sql, (self.capture.date, product['id']))
+        
+    def setCmPicked(self, product):
+        #不是使用and 使用,
+        sql = """update products set cm_picked = 1, cm_pick_time=%s
+                 where id = %s
+              """
+        self.db.cursor.execute(sql, (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), product['id']))
 
     def record_load_success(self):
         config.set("loadrecords", self.capture.merchant.merchantName, self.capture.date.strftime("%m-%d-%Y"))
