@@ -170,6 +170,7 @@ class Loader():
                 self.saveDataFile(capture.get_filename().replace("csv", "xls"))
                 self.loaded_files[capture.get_filename()] = True
             except Exception, e:
+                error(e) #一定要记录下来
                 print e
 
     def get_new_captures(self):
@@ -445,7 +446,7 @@ class CaptureLoader():
                 status, details = self.productCache.getProductStatus(product)
                 if status =='new':
                     categoryPath = product.getCategoryPath()
-                    #品类书已经完善, 求出新品的category id
+                    #品类树已经完善, 求出新品的category id
                     product['category_id'] = self.categoryCache.find_category(categoryPath).categoryId
                     self.insert_product(product)
                     insert += 1
@@ -587,7 +588,7 @@ totally loaded: %d
         self.db.cursor.execute(sql, (product.getCategoryIndex(), product['id']))
     
     def insert_product_ranks(self, product):
-        sql = """replace into products_sammydress 
+        sql = """replace into product_ranks 
                  (product_id, capture_date, price, price_old, reviews, \
                   facebook_likes, google_likes, vk_likes, page, position)
                   values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
