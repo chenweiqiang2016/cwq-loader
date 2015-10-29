@@ -707,7 +707,7 @@ class ProductCache:
                   "latest_capture_date": latest_capture_date}
         values_obj = pickle.dumps(values)
         if self.cache.has_key(key): #测试代码
-            print key
+            """do nothing""""#print key
         self.cache[key] = values_obj
     
     def find(self, key):
@@ -828,7 +828,7 @@ class Product:
         elif self['sell_status'] == "OUT OF STOCK":
             return 22
         else:
-            print self['sell_status'], self.sku_id, "other sell status"
+            #print self['sell_status'], self.sku_id, "other sell status"
             return 0
 
     def getSellStartDate(self):
