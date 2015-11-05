@@ -473,7 +473,8 @@ class CaptureLoader():
                 self.insert_product_ranks(product)
                 self.updateLatestCaptureDate(product)
                 #配合最近推行的直接抓取部分商品 全部推送
-                self.setCmPicked(product)
+                if int(product['category_index']) <= 20:
+                    self.setCmPicked(product)
             except Exception, e:
                 print e
                 error += 1
@@ -707,7 +708,7 @@ class ProductCache:
                   "latest_capture_date": latest_capture_date}
         values_obj = pickle.dumps(values)
         if self.cache.has_key(key): #测试代码
-            """do nothing""""#print key
+            """do nothing"""#print key
         self.cache[key] = values_obj
     
     def find(self, key):
