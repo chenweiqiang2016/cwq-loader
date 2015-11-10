@@ -2,6 +2,8 @@
 
 
 """
+11/10/2015 Chen Weiqiang 程序在线上运行出现bug, 更新reviews不能采用replace into, 应该使用update
+
 10/28/2015 Chen Weiqiang 全部商品更新cm_picked为1
 
 10/26/2015 Chen Weiqiang 基本完成  部分字段需要完善
@@ -548,11 +550,11 @@ totally loaded: %d
     def updateReviews(self, product):
         #将之前最新的reviews和latest_capture_date更新为last存在一定的隐患
         cachedValues = self.productCache.findByProduct(product)
-        sql = """replace into products (id, last_reviews, last_capture_date, reviews)
-                 values (%s, %s, %s, %s)
+        sql = """update products set last_reviews=%s, last_capture_date=%s, reviews=%s
+                 where id=%s
               """
-        self.db.cursor.execute(sql, (cachedValues['aimsId'], cachedValues['reviews'], \
-                              cachedValues['latest_capture_date'], product['reviews']))
+        self.db.cursor.execute(sql, (cachedValues['reviews'], cachedValues['latest_capture_date'], \
+                                     product['reviews'], cachedValues['aimsId']))
         
         self.insert_product_changes(product)
         
