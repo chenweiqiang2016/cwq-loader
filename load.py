@@ -2,6 +2,8 @@
 
 
 """
+11/27/2015 Chen Weiqiang 解决load京东中文数据的问题, 以UTF-8编码的字符串写入数据库, 数据库读出的字符串type是unicode
+
 11/10/2015 Chen Weiqiang 程序在线上运行出现bug, 更新reviews不能采用replace into, 应该使用update
 
 10/28/2015 Chen Weiqiang 全部商品更新cm_picked为1
@@ -51,6 +53,7 @@ def get_config(section, option):
 
 data_dir = get_config('all', 'data.dir')
 save_dir = get_config('all', 'save.dir')
+db_section = get_config('all', 'db.section')
 
 DATA_GLOB_PATTERN = "*_productInfo.csv"
 DATA_RE_PATTERN = "([\w-]+)_(\d\d)-(\d\d)-(\d\d\d\d)_productInfo.csv"
@@ -106,14 +109,16 @@ class Capture():
 class Db:
     def __init__(self, useServerCursor=False):
         if useServerCursor:
-            self.conn = MySQLdb.connect(host=get_config('localhost', 'host'),
-                                        user=get_config('localhost', 'user'),
-                                        passwd=get_config('localhost', 'passwd'),
+            self.conn = MySQLdb.connect(host=get_config(db_section, 'host'),
+                                        user=get_config(db_section, 'user'),
+                                        passwd=get_config(db_section, 'passwd'),
+                                        charset='utf8',
                                         cursorclass=MySQLdb.cursors.SSCursor)
         else:
-            self.conn = MySQLdb.connect(host=get_config('localhost', 'host'),
-                                        user=get_config('localhost', 'user'),
-                                        passwd=get_config('localhost', 'passwd'))
+            self.conn = MySQLdb.connect(host=get_config(db_section, 'host'),
+                                        user=get_config(db_section, 'user'),
+                                        passwd=get_config(db_section, 'passwd'),
+                                        charset='utf8')
         
         self.cursor = self.conn.cursor()
         self.conn.autocommit(False)
@@ -307,8 +312,11 @@ class CaptureLoader():
               """
         self.db.cursor.execute(sql, self.capture.merchant.merchantId)
         for row in self.db.cursor.fetchall():
+            #数据库utf8读出来的是unicode格式, 我们编成utf-8编码的str
+            #否则文件中的品类名(utf-8)不与数据库中的品类名相同, 重复创建品类
+            row_1 = row[1].encode("utf-8") if isinstance(row[1], unicode) else row[1]
             parentCategoryId = row[3]
-            category = Category(row[0], row[1], row[2])
+            category = Category(row[0], row_1, row[2])
             self.categoryCache.cache_category(category, parentCategoryId)
         info("%s have been loaded." %self.categoryCache.getCategoriesCount())
         print "%s have been loaded." %self.categoryCache.getCategoriesCount()
@@ -795,6 +803,9 @@ class Product:
         self.attrs = {}
         for key, value in args.items():
             self[key] = value
+            if key in ['price']: #京东的price是: 暂无报价
+                if not re.findall('[0-9]', self[key]):
+                    self[key] = '0.00'
             
     
     def __setitem__(self, key, value):
