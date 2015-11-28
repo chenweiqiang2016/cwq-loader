@@ -2,6 +2,8 @@
 
 
 """
+11/28/2015 Chen Weiqiang 研究execute的运行机制, 会将每一个参数统一编码
+
 11/27/2015 Chen Weiqiang 解决load京东中文数据的问题, 以UTF-8编码的字符串写入数据库, 数据库读出的字符串type是unicode
 
 11/10/2015 Chen Weiqiang 程序在线上运行出现bug, 更新reviews不能采用replace into, 应该使用update
@@ -27,6 +29,10 @@ import pickle
 import time
 import logging
 from logging import error, warning, info, debug
+
+#认为MySQLdb.Warning为Error
+from warnings import filterwarnings
+filterwarnings('error', category=MySQLdb.Warning)
 
 config = ConfigParser.ConfigParser()
 fp = open('load.cfg')
@@ -412,8 +418,13 @@ class CaptureLoader():
                 values
                     (%s, %s, %s, %s)
               """
-        self.db.cursor.execute(sql, (categoryName, categoryLevel, parent_id, self.capture.merchant.merchantId))
-        
+        #'ascii' codec can't decode byte 0xe6 in position 125: ordinal not in range(128)
+        try:
+            self.db.cursor.execute(sql, (categoryName, categoryLevel, parent_id, self.capture.merchant.merchantId))
+        except MySQLdb.Warning, e:
+            sqlWarning = "Warning: %s" %str(e)
+            print sqlWarning
+        #print sql %(categoryName, categoryLevel, parent_id, self.capture.merchant.merchantId)
         category_id = self.db.cursor.lastrowid
         #新生成的category也放入CategoryCache
         new_category = Category(category_id, categoryName, categoryLevel)
