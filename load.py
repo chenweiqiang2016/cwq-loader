@@ -2,6 +2,8 @@
 
 
 """
+11/28/2015 Chen Weiqiang 将db初始化的charset='utf8'删除, 否则在aws机器上不能正常工作
+
 11/28/2015 Chen Weiqiang 研究execute的运行机制, 会将每一个参数统一编码
 
 11/27/2015 Chen Weiqiang 解决load京东中文数据的问题, 以UTF-8编码的字符串写入数据库, 数据库读出的字符串type是unicode
@@ -118,13 +120,11 @@ class Db:
             self.conn = MySQLdb.connect(host=get_config(db_section, 'host'),
                                         user=get_config(db_section, 'user'),
                                         passwd=get_config(db_section, 'passwd'),
-                                        charset='utf8',
                                         cursorclass=MySQLdb.cursors.SSCursor)
         else:
             self.conn = MySQLdb.connect(host=get_config(db_section, 'host'),
                                         user=get_config(db_section, 'user'),
-                                        passwd=get_config(db_section, 'passwd'),
-                                        charset='utf8')
+                                        passwd=get_config(db_section, 'passwd'))
         
         self.cursor = self.conn.cursor()
         self.conn.autocommit(False)
