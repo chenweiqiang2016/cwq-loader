@@ -2,6 +2,8 @@
 
 
 """
+11/30/2015 Chen Weiqiang 实现多个文件的load, 自动读取设置成cm_picked=1的数目
+
 11/28/2015 Chen Weiqiang 将db初始化的charset='utf8'删除, 否则在aws机器上不能正常工作
 
 11/28/2015 Chen Weiqiang 研究execute的运行机制, 会将每一个参数统一编码
@@ -92,6 +94,7 @@ class Merchant:
         self.merchantId = merchantId
         self.merchantName = name
         self.scoringFields = scoring_fields.split(",")
+        self.toCmpickedCount = -1
         
     def __str__(self):
         return "%s(%s)%s" %(self.merchantName, self.merchantId, str(self.scoringFields))
@@ -112,6 +115,13 @@ class Capture():
         return self.get_filename()
     
     __repr__ = __str__
+    
+    @staticmethod
+    def cmp(c1, c2):
+        if c1.merchantName == c2.merchantName:
+            return (c1.date - c2.date).days
+        else:
+            return cmp(c1.merchantName, c2.merchantName) #使用内建的compare函数
     
 
 class Db:
@@ -142,11 +152,27 @@ class Loader():
         
         self.load_records = {}
         
+        self.loadCmpickedCount()
+        
         self.loadMerchantsFromDb()
         
         self.loadLoadingRecordsFromConfig()
         
         self.loaded_files = {}
+        
+    def loadCmpickedCount(self):
+        self.cmpickDic = {}
+        fw = open("cmPicked.cfg")
+        while True:
+            line = fw.readline().strip()
+            if not line:
+                break
+            fields = line.split("=")
+            if len(fields) != 2:
+                continue
+            self.cmpickDic[fields[0].strip()] = int(fields[1].strip())
+        fw.close()
+            
     
     def loadMerchantsFromDb(self):
         db = Db()
@@ -161,6 +187,8 @@ class Loader():
         for row in db.cursor.fetchall():
             merchantName = row[1]
             merchant = Merchant(row[0], row[1], row[2])
+            if self.cmpickDic.has_key(merchant.merchantName):
+                merchant.toCmpickedCount = self.cmpickDic.get(merchant.merchantName)
             self.merchants[merchantName] = merchant
         db.close()
     
@@ -204,6 +232,8 @@ class Loader():
                 result.append(capture)
             else:
                 self.loaded_files[capture.get_filename()] = True
+        #sort排序并且更改; sorted只排序,不更改,赋值给新变量
+        result.sort(Capture.cmp)
         return result
     
     def isNewCaptured(self, capture):
@@ -494,7 +524,7 @@ class CaptureLoader():
                 self.insert_product_ranks(product)
                 self.updateLatestCaptureDate(product)
                 #配合最近推行的直接抓取部分商品 全部推送
-                if int(product['category_index']) <= 20:
+                if int(product['category_index']) <= self.capture.merchant.toCmpickedCount:
                     self.setCmPicked(product)
             except Exception, e:
                 print e
