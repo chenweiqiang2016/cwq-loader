@@ -1,0 +1,12 @@
+
+ 执行写入52数据库时报错
+88009479 Warning: Incorrect string value: '\x92 Chif...' for column 'name' at row 1
+http://www.sammydress.com/product857196.html
+88009602 Warning: Incorrect string value: '\x91s Sun...' for column 'name' at row 1
+http://www.sammydress.com/product1288649.html
+提取该字符串进行decode("utf-8")报错
+
+1002948 Warning: Incorrect string value: '\xB0Wide-...' for column 'img_url' at row 1
+http://www.tmart.com/2.7-HD-1080P-Night-Vision-170-Wide-Angle-Car-DVR-Camera-Recorder_p181001.html
+http://cdn2.image-tmart.com/prodimgs/1/12006131/27-HD-1080P-Night-Vision-170\xb0Wide-Angle-Car-Video-Camera-Recorder_150x150.jpg?1374196570
+UnicodeDecodeError: 'utf8' codec can't decode byte 0x92 in position 21: invalid start byte
