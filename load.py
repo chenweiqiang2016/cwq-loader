@@ -2,6 +2,8 @@
 
 
 """
+12/09/2015 Chen Weiqiang cm_picked=1的商品不再更新cm_picked和cm_pick_time
+
 11/30/2015 Chen Weiqiang 实现多个文件的load, 自动读取设置成cm_picked=1的数目
 
 11/28/2015 Chen Weiqiang 将db初始化的charset='utf8'删除, 否则在aws机器上不能正常工作
@@ -662,6 +664,12 @@ totally loaded: %d
         self.db.cursor.execute(sql, (self.capture.date, product['id']))
         
     def setCmPicked(self, product):
+        check_sql = """select cm_picked from products where id = %s
+        """
+        self.db.cursor.execute(check_sql, product['id'])
+        result = self.db.cursor.fetchone()
+        if str(result[0]) == '1': #已经为1, 跳过
+            return
         #不是使用and 使用,
         sql = """update products set cm_picked = 1, cm_pick_time=%s
                  where id = %s
