@@ -101,7 +101,7 @@ class Loader:
             first_line = first_line[len(codecs.BOM_UTF8):]
         headers = first_line.split('\t')
         while True:
-            line = fr.readline().strip()
+            line = fr.readline().replace("\n", "")#.strip()
             if not line:
                 break
             fields = line.split('\t')
@@ -141,31 +141,39 @@ class Loader:
         MOQ = self.format_data(datas, ['MOQ'])
         if datas.has_key('update_time'): #为vvic服务
             update_time = datas['update_time']
-            month, year = re.findall('\d+', update_time)[0]
+            #month, year = re.findall('\d+', update_time)[1], re.findall('\d+', update_time)[0]
+            on_shelf_time = datetime.datetime.strptime(update_time, "%Y-%m-%d").date()
         else:
             on_shelf_time = datas['on_shelf_time']
         store_name = self.format_data(datas, ['store_name', 'merchant_name', 'merchant'])
         store_url =  self.format_data(datas, ['store_url', 'merchant_url'])
         store_address = self.format_data(datas,['store_address'])
+        if not store_address:
+            store_address = self.format_data(datas,['marketName']) + ' ' + self.format_data(datas,['floor']) + ' ' + self.format_data(datas,['position'])
         qq = self.format_data(datas, ['qq'])
         telephone = self.format_data(datas,['telephone'])
         supplier_name = self.format_data(datas,['supplier_name'])
         city = self.format_data(datas,['city'])
-        reviews = int(datas['reviews'])
+        reviews = int(datas['reviews']) if datas.has_key("reviews") else 0
         return (merchant, level1_category, level2_category, level3_category, sku_id, new_id, product_name, product_price, product_url, img_url, imgs, size, color, MOQ, on_shelf_time, store_name, store_url, store_address, qq, telephone, supplier_name, city, reviews, datetime.datetime.now())
     
     def format_data(self, datas, keyList):
         result = None
         try:
             for key in keyList:
-                result = datas[key]
+                try:
+                    result = datas[key]
+                except:
+                    pass
                 if result is not None:
                     break
         except:
+            result = ''
+        if not result:
             result = ''
         return result
                 
 if __name__ == '__main__':
     loader = Loader()
-    loader.run("1688_04-14-2016_productInfo.csv")
+    loader.run("vvic_05-04-2016_productInfo.csv")
     
