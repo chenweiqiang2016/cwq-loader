@@ -8,6 +8,7 @@ import codecs
 import MySQLdb
 import datetime
 import ConfigParser
+import sys
 
 cf = ConfigParser.ConfigParser()
 cf.readfp(open('load.cfg'))
@@ -174,6 +175,7 @@ class Loader:
         return result
                 
 if __name__ == '__main__':
+    filename = sys.argv[1]
     loader = Loader()
-    loader.run("vvic_05-04-2016_productInfo.csv")
+    loader.run(filename)
     
